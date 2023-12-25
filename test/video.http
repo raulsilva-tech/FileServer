@@ -1,0 +1,8 @@
+POST http://localhost:8888/get_video HTTP/1.1
+Content-Type: application/json
+
+{
+    "url": "http://dankia:dankia77@192.168.7.192:9090/cgi-bin/loadfile.cgi?action=startLoad&channel=1&startTime=2023-12-24%2020:44:29&endTime=2023-12-24%2021:45:0&Types=mp4",
+    "fileName": "TESTE3.mp4"
+}
+###
