@@ -40,6 +40,8 @@ func main() {
 	//creating route for the DVR request to get the video
 	r.Post("/get_video", vh.DownloadVideo)
 
+	r.Get("/erase_videos/{id}", vh.EraseVideos)
+
 	log.Printf("Serving %s on HTTP port: %s\n", cfg.Directory, cfg.Port)
 	//starting the server
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))

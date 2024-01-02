@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/raulsilva-tech/FileServer/configs"
 	"github.com/raulsilva-tech/FileServer/internal/dto"
 )
@@ -19,6 +22,37 @@ type Error struct {
 
 func NewVideoHandler() *VideoHandler {
 	return &VideoHandler{}
+}
+
+func (vh *VideoHandler) EraseVideos(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userId := chi.URLParam(r, "id")
+	if userId == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Error{
+			Message: "id is required",
+		})
+		return
+	}
+
+	//getting the path to save the video
+	cfg, _ := configs.LoadConfig(".")
+
+	err := removeAllFilesFromThisUser(userId, *cfg)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(Error{
+			Message: err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(Error{
+		Message: "Success",
+	})
+
 }
 
 func (vh *VideoHandler) DownloadVideo(w http.ResponseWriter, r *http.Request) {
@@ -97,18 +131,25 @@ func requestVideo(videoInfo dto.DownloadVideoInput) error {
 	}
 }
 
-// func removeAllFilesFromThisUser(userId string, cfg configs.Config) error {
+func removeAllFilesFromThisUser(userId string, cfg configs.Config) error {
 
-// 	files, err := os.ReadDir(cfg.Directory)
-// 	if err != nil {
-// 		return err
-// 	}
+	files, err := os.ReadDir(cfg.Directory)
+	if err != nil {
+		return err
+	}
 
-// 	for _, file := range files {
-// 		if strings.Contains(file.Name(), userId) {
-// 			_ = os.Remove(cfg.Directory + "/" + file.Name())
-// 		}
-// 	}
+	files_found := false
 
-// 	return nil
-// }
+	for _, file := range files {
+		if strings.Contains(file.Name(), "U_"+userId) {
+			files_found = true
+			_ = os.Remove(cfg.Directory + "/" + file.Name())
+		}
+	}
+
+	if !files_found {
+		return errors.New("No files found with user id " + userId)
+	}
+
+	return nil
+}

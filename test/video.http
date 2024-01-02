@@ -6,3 +6,7 @@ Content-Type: application/json
     "fileName": "TESTE3.mp4"
 }
 ###
+
+
+GET http://localhost:8888/erase_videos/5 HTTP/1.1
+Content-Type: application/json
