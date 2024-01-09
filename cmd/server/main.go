@@ -42,7 +42,7 @@ func main() {
 
 	r.Get("/erase_videos/{id}", vh.EraseVideos)
 
-	log.Printf("Serving %s on HTTP port: %s\n", cfg.Directory, cfg.Port)
+	log.Printf("Serving %s on HTTP port: %s \n", cfg.Directory, cfg.Port)
 	//starting the server
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))
 
