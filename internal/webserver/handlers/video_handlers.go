@@ -72,7 +72,7 @@ func (vh *VideoHandler) DownloadVideo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//sending request to get the video from the DVR
-	err = requestVideo(videoDTO)
+	_, err = requestAndSaveVideo(videoDTO)
 	if err != nil {
 		fmt.Println(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -84,18 +84,19 @@ func (vh *VideoHandler) DownloadVideo(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(Error{
-		Message: "None",
+		Message: "Success",
 	})
 }
 
-func requestVideo(videoInfo dto.DownloadVideoInput) error {
+func requestAndSaveVideo(videoInfo dto.DownloadVideoInput) (*os.File, error) {
 	//getting the path to save the video
 	cfg, _ := configs.LoadConfig(".")
 
 	//if file exists, do not request
 	if _, err := os.Stat(cfg.Directory + "/" + videoInfo.FileName); err == nil {
 		fmt.Println(videoInfo.FileName + ": Already exists")
-		return nil
+		file, _ := os.Open(cfg.Directory + "/" + videoInfo.FileName)
+		return file, err
 	} else {
 
 		req, err := http.NewRequest(http.MethodGet, videoInfo.Url, nil)
@@ -110,24 +111,24 @@ func requestVideo(videoInfo dto.DownloadVideoInput) error {
 		}
 		res, err := client.Do(req)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer res.Body.Close()
 		d, err := io.ReadAll(res.Body)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		//creating the video
 		tmpfile, err := os.Create(cfg.Directory + "/" + videoInfo.FileName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer tmpfile.Close()
 		//actively creating the video
 		tmpfile.Write(d)
 
-		return nil
+		return tmpfile, err
 	}
 }
 
